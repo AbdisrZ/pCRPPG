@@ -1,0 +1,1 @@
+baca docs/00_MASTER_PROMPT.md dulu sebelum kerja apapun
