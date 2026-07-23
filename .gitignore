@@ -41,6 +41,9 @@ build/
 .claude/
 CLAUDE.md
 
+### Project design docs — kept local, not committed (governance set + ADRs) ###
+docs/**/*.md
+
 ### Secrets / credentials — never commit ###
 .env
 .env.*
