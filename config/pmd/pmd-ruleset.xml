@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset name="rppg-pmd"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+
+    <description>
+        PMD ruleset for the rPPG Desktop Vitals Monitor. Enforces the size and complexity
+        metrics assigned to PMD by 05_CODING_STANDARD.md §13, sourced from 00_MASTER_PROMPT.md §10:
+        cyclomatic complexity per method ≤ 10, method length ≤ 40, class length ≤ 400. Also flags
+        empty catch blocks, forbidden by 00 §22.1. Report levels are set one above the governance
+        threshold so that a value exactly at the limit passes and only a value beyond it fails.
+    </description>
+
+    <!-- 00 §10: cyclomatic complexity per method ≤ 10. Report at 11+. -->
+    <rule ref="category/java/design.xml/CyclomaticComplexity">
+        <properties>
+            <property name="methodReportLevel" value="11"/>
+        </properties>
+    </rule>
+
+    <!-- 00 §10: method length ≤ 40, class length ≤ 400 (measured as non-commenting statements). -->
+    <rule ref="category/java/design.xml/NcssCount">
+        <properties>
+            <property name="methodReportLevel" value="41"/>
+            <property name="classReportLevel" value="401"/>
+        </properties>
+    </rule>
+
+    <!--
+        00 §22.1: empty catch blocks are forbidden — but that same rule explicitly permits an
+        exception "visibly ignored with a comment explaining why it is safe to ignore". So a catch
+        whose body is a single explanatory comment is allowed; a truly empty one is not.
+    -->
+    <rule ref="category/java/errorprone.xml/EmptyCatchBlock">
+        <properties>
+            <property name="allowCommentedBlocks" value="true"/>
+        </properties>
+    </rule>
+</ruleset>

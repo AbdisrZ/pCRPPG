@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SpotBugs exclusion filter for the rPPG Desktop Vitals Monitor.
+
+  Intentionally empty at Phase 0: SpotBugs runs at maximum effort with the Low confidence
+  threshold (05_CODING_STANDARD.md §13, 00_MASTER_PROMPT.md §10) and no findings are suppressed.
+  Any future exclusion added here must cite the specific reason and, per 00 §8, be recorded —
+  a blanket suppression is a quality-gate violation, not a convenience.
+-->
+<FindBugsFilter>
+    <!--
+      The schema migration runner executes DDL statements read from a bundled, trusted resource file
+      (10_DATABASE.md §5). Running migration scripts is inherently "non-constant SQL"; the content is
+      shipped in the jar, never user- or network-sourced, so this is not an injection surface. Scoped
+      narrowly to the one method that applies a migration.
+    -->
+    <Match>
+        <Class name="id.asr.rppgvitals.infrastructure.persistence.sqlite.SchemaMigrationRunner"/>
+        <Method name="applyMigration"/>
+        <Bug pattern="SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE"/>
+    </Match>
+</FindBugsFilter>

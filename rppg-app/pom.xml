@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>id.asr.rppgvitals</groupId>
+        <artifactId>rppg-parent</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>rppg-app</artifactId>
+    <name>rPPG App (Composition Root)</name>
+    <description>
+        Composition root: Main, CompositionRoot wiring, logback.xml (03_ARCHITECTURE.md
+        section 8). The only module permitted to depend on every other module. Also hosts the
+        ArchUnit fitness tests (04_PACKAGE_STRUCTURE.md section 8), added by T-002.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>id.asr.rppgvitals</groupId>
+            <artifactId>rppg-presentation</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>id.asr.rppgvitals</groupId>
+            <artifactId>rppg-infrastructure-capture</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>id.asr.rppgvitals</groupId>
+            <artifactId>rppg-infrastructure-inference</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>id.asr.rppgvitals</groupId>
+            <artifactId>rppg-infrastructure-persistence</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!--
+            ArchUnit lives here because rppg-app is the only module with the full assembled
+            dependency graph on its test classpath (04 §8). The fitness suite enforces the
+            Dependency-Rule invariants that Maven module boundaries alone cannot express.
+        -->
+        <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit-junit5</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!--
+                13 §7: project-wide coverage visibility. rppg-app depends on every other module, so
+                `report-aggregate` produces the true combined coverage report across the whole
+                reactor at target/site/jacoco-aggregate. The 80% line floor is *enforced* per module
+                via the inherited jacoco-check-line-floor rule (see the parent pom and ADR 0002 §6);
+                this execution is the honest reported aggregate that the floor guarantees.
+            -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>jacoco-report-aggregate</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report-aggregate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

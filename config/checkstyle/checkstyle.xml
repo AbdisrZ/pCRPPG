@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE module PUBLIC
+        "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+        "https://checkstyle.org/dtds/configuration_1_3.dtd">
+
+<!--
+  Checkstyle configuration for the rPPG Desktop Vitals Monitor.
+
+  Scope is deliberately narrow: Spotless (Palantir Java Format) owns all whitespace,
+  brace, wrapping, and import *grouping* concerns (05_CODING_STANDARD.md §2, §3), so this
+  ruleset enforces only the *structural* rules Spotless does not — JavaDoc presence (§8),
+  member declaration order (§5), and the no-wildcard-import rule (§3). Keeping the two tools
+  non-overlapping avoids a formatter-vs-linter tug of war. All findings are errors: no
+  warning-only gate exists in this project (00 §10, 05 §13).
+-->
+<module name="Checker">
+    <property name="charset" value="UTF-8"/>
+    <property name="severity" value="error"/>
+    <property name="fileExtensions" value="java, properties, xml"/>
+
+    <!-- 05 §2: tabs are never used. -->
+    <module name="FileTabCharacter">
+        <property name="eachLine" value="true"/>
+    </module>
+
+    <!-- Scopes JavadocPackage to main sources (see checkstyle-suppressions.xml). -->
+    <module name="SuppressionFilter">
+        <property name="file" value="${checkstyle.suppressions.file}" default=""/>
+        <property name="optional" value="true"/>
+    </module>
+
+    <!-- 04 §5: every production package carries a package-info.java. -->
+    <module name="JavadocPackage"/>
+
+    <module name="TreeWalker">
+        <!--
+          05 §3: wildcard imports are forbidden. Unused/redundant-import removal is owned by
+          Spotless's removeUnusedImports step, which — unlike Checkstyle's UnusedImports — correctly
+          treats a type referenced only from a `///` Markdown JavaDoc tag as used (see ADR 0002 §4
+          and the same `///` limitation recorded in NC-004). Keeping UnusedImports here would
+          false-flag every javadoc-only import (e.g. a documented `@throws` type).
+        -->
+        <module name="AvoidStarImport"/>
+
+        <!-- 05 §5: static fields, instance fields, constructors, then methods. -->
+        <module name="DeclarationOrder"/>
+
+        <!--
+          JavaDoc-presence enforcement (05 §8) is intentionally NOT done here. Checkstyle's
+          MissingJavadocType / MissingJavadocMethod checks (verified through Checkstyle 13.8.0) do
+          not recognise JEP 467 Markdown documentation comments (///), which 05 §8 mandates — they
+          would false-flag every correctly documented Phase-1 type. The `///`-aware alternative is
+          javac -Xdoclint, wired at the start of Phase 1 (T-101) when real public API exists to tune
+          it against. See docs/adr/0002 and the NC-004 entry in docs/15_TASK.md.
+        -->
+    </module>
+</module>

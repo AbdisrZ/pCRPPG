@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>id.asr.rppgvitals</groupId>
+        <artifactId>rppg-parent</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>rppg-infrastructure-inference</artifactId>
+    <name>rPPG Infrastructure - Inference (ONNX Runtime)</name>
+    <description>
+        OnnxInferenceEngine adapter implementing the InferenceEngine port (09_AI_INTEGRATION.md).
+        The ONNX Runtime dependency is added by T-203 (after model selection T-202/NC-001); it is
+        deliberately absent from this skeleton pom.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>id.asr.rppgvitals</groupId>
+            <artifactId>rppg-domain</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+</project>

@@ -4,14 +4,453 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>tech</groupId>
-    <artifactId>PCrPPG</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <groupId>id.asr.rppgvitals</groupId>
+    <artifactId>rppg-parent</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>rPPG Desktop Vitals Monitor - Parent</name>
+    <description>
+        Seven-module layout per docs/03_ARCHITECTURE.md section 8; governance root is
+        docs/00_MASTER_PROMPT.md. Every dependency version is pinned exactly (00 section 16).
+        The five-tool quality gate (Spotless, Checkstyle, PMD, SpotBugs, ArchUnit) and JaCoCo
+        coverage run inside `mvn verify` and fail the build on violation (05 section 13, 13 section 7).
+    </description>
+
+    <modules>
+        <module>rppg-domain</module>
+        <module>rppg-application</module>
+        <module>rppg-infrastructure-capture</module>
+        <module>rppg-infrastructure-inference</module>
+        <module>rppg-infrastructure-persistence</module>
+        <module>rppg-presentation</module>
+        <module>rppg-app</module>
+    </modules>
 
     <properties>
-        <maven.compiler.source>25</maven.compiler.source>
-        <maven.compiler.target>25</maven.compiler.target>
+        <maven.compiler.release>25</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- Root-relative location of shared static-analysis rulesets (05 §13). -->
+        <rppg.build.config.dir>${maven.multiModuleProjectDirectory}/config</rppg.build.config.dir>
+
+        <!-- Library versions (00 §16: pinned exactly, no ranges). -->
+        <commons-math3.version>3.6.1</commons-math3.version>
+        <sqlite-jdbc.version>3.53.2.1</sqlite-jdbc.version>
+        <junit.version>5.11.4</junit.version>
+        <mockito.version>5.23.0</mockito.version>
+        <slf4j.version>2.0.16</slf4j.version>
+        <logback.version>1.5.12</logback.version>
+        <archunit.version>1.4.2</archunit.version>
+
+        <!-- Build-plugin versions (00 §16). -->
+        <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
+        <maven-surefire-plugin.version>3.5.2</maven-surefire-plugin.version>
+        <maven-enforcer-plugin.version>3.5.0</maven-enforcer-plugin.version>
+        <spotless-maven-plugin.version>3.8.0</spotless-maven-plugin.version>
+        <palantir-java-format.version>2.96.0</palantir-java-format.version>
+        <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
+        <checkstyle.version>10.26.1</checkstyle.version>
+        <maven-pmd-plugin.version>3.28.0</maven-pmd-plugin.version>
+        <pmd.version>7.26.0</pmd.version>
+        <spotbugs-maven-plugin.version>4.10.3.0</spotbugs-maven-plugin.version>
+        <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
     </properties>
 
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>${junit.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-math3</artifactId>
+                <version>${commons-math3.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.xerial</groupId>
+                <artifactId>sqlite-jdbc</artifactId>
+                <version>${sqlite-jdbc.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-core</artifactId>
+                <version>${mockito.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-classic</artifactId>
+                <version>${logback.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.tngtech.archunit</groupId>
+                <artifactId>archunit-junit5</artifactId>
+                <version>${archunit.version}</version>
+                <scope>test</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <!-- JUnit 5 is the project-wide test framework (00 section 14). -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${maven-compiler-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>${maven-surefire-plugin.version}</version>
+                </plugin>
+
+                <!-- 05 §2/§3: Palantir Java Format via Spotless owns all formatting. -->
+                <plugin>
+                    <groupId>com.diffplug.spotless</groupId>
+                    <artifactId>spotless-maven-plugin</artifactId>
+                    <version>${spotless-maven-plugin.version}</version>
+                    <configuration>
+                        <java>
+                            <includes>
+                                <include>src/main/java/**/*.java</include>
+                                <include>src/test/java/**/*.java</include>
+                            </includes>
+                            <palantirJavaFormat>
+                                <version>${palantir-java-format.version}</version>
+                            </palantirJavaFormat>
+                            <importOrder>
+                                <order>java|javax,,id.asr.rppgvitals</order>
+                            </importOrder>
+                            <removeUnusedImports/>
+                            <trimTrailingWhitespace/>
+                            <endWithNewline/>
+                        </java>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>spotless-check</id>
+                            <phase>verify</phase>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+
+                <!-- 05 §8/§5/§3: JavaDoc presence, member order, no wildcard imports. -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-checkstyle-plugin</artifactId>
+                    <version>${maven-checkstyle-plugin.version}</version>
+                    <dependencies>
+                        <dependency>
+                            <groupId>com.puppycrawl.tools</groupId>
+                            <artifactId>checkstyle</artifactId>
+                            <version>${checkstyle.version}</version>
+                        </dependency>
+                    </dependencies>
+                    <configuration>
+                        <configLocation>${rppg.build.config.dir}/checkstyle/checkstyle.xml</configLocation>
+                        <suppressionsLocation>${rppg.build.config.dir}/checkstyle/checkstyle-suppressions.xml</suppressionsLocation>
+                        <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                        <consoleOutput>true</consoleOutput>
+                        <failOnViolation>true</failOnViolation>
+                        <violationSeverity>error</violationSeverity>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>checkstyle-check</id>
+                            <phase>verify</phase>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+
+                <!-- 00 §10: cyclomatic complexity, method/class length. -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-pmd-plugin</artifactId>
+                    <version>${maven-pmd-plugin.version}</version>
+                    <dependencies>
+                        <!-- Pin PMD to a version whose Java grammar understands Java 25 (00 §16). -->
+                        <dependency>
+                            <groupId>net.sourceforge.pmd</groupId>
+                            <artifactId>pmd-core</artifactId>
+                            <version>${pmd.version}</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>net.sourceforge.pmd</groupId>
+                            <artifactId>pmd-java</artifactId>
+                            <version>${pmd.version}</version>
+                        </dependency>
+                    </dependencies>
+                    <configuration>
+                        <rulesets>
+                            <ruleset>${rppg.build.config.dir}/pmd/pmd-ruleset.xml</ruleset>
+                        </rulesets>
+                        <includeTests>true</includeTests>
+                        <printFailingErrors>true</printFailingErrors>
+                        <failOnViolation>true</failOnViolation>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>pmd-check</id>
+                            <phase>verify</phase>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+
+                <!-- 05 §13: correctness and null-safety static analysis. -->
+                <plugin>
+                    <groupId>com.github.spotbugs</groupId>
+                    <artifactId>spotbugs-maven-plugin</artifactId>
+                    <version>${spotbugs-maven-plugin.version}</version>
+                    <configuration>
+                        <effort>Max</effort>
+                        <threshold>Low</threshold>
+                        <failOnError>true</failOnError>
+                        <excludeFilterFile>${rppg.build.config.dir}/spotbugs/exclude.xml</excludeFilterFile>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>spotbugs-check</id>
+                            <phase>verify</phase>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+
+                <!--
+                    13 §7: coverage measurement and gating. Every module inherits an 80%-line floor
+                    (jacoco-check-line-floor). Enforcing the floor per module is stricter than, and
+                    therefore implies, 13 §7's project-wide ≥ 80% line aggregate — JaCoCo's `check`
+                    goal cannot span modules, so a per-module floor is the honest way to gate it
+                    (ADR 0002 §6). The domain module adds the stricter 90/85 rule on top. Modules with
+                    no executable code yet (only package-info) analyse an empty bundle and pass
+                    vacuously; the floor bites as soon as real code lands.
+                -->
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>${jacoco-maven-plugin.version}</version>
+                    <executions>
+                        <execution>
+                            <id>jacoco-prepare-agent</id>
+                            <goals>
+                                <goal>prepare-agent</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>jacoco-report</id>
+                            <phase>test</phase>
+                            <goals>
+                                <goal>report</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>jacoco-check-line-floor</id>
+                            <phase>verify</phase>
+                            <goals>
+                                <goal>check</goal>
+                            </goals>
+                            <configuration>
+                                <rules>
+                                    <rule>
+                                        <element>BUNDLE</element>
+                                        <limits>
+                                            <limit>
+                                                <counter>LINE</counter>
+                                                <value>COVEREDRATIO</value>
+                                                <minimum>0.80</minimum>
+                                            </limit>
+                                        </limits>
+                                    </rule>
+                                </rules>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>${maven-enforcer-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>enforce-build-invariants</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <!-- 00 section 26: fail on convergence issues and banned version ranges. -->
+                                <dependencyConvergence/>
+                                <requireJavaVersion>
+                                    <version>[25,)</version>
+                                </requireJavaVersion>
+                                <requireMavenVersion>
+                                    <version>[3.9,)</version>
+                                </requireMavenVersion>
+                                <!--
+                                    T-004 / 14 §3: fail loudly on an unsupported platform. On a supported
+                                    OS/arch one of the four platform profiles has set `native.classifier`;
+                                    if none did, this build-time check fails with a clear message rather than
+                                    deferring to a runtime UnsatisfiedLinkError. A plugin executing here sees
+                                    the merged property set from active profiles (unlike profile activation).
+                                -->
+                                <requireProperty>
+                                    <property>native.classifier</property>
+                                    <message>
+                                        Unsupported build platform: no native-library profile matched this
+                                        OS/architecture. Supported combinations are Windows x86-64, macOS x86-64,
+                                        macOS ARM64, and Linux x86-64 (14_DEPLOYMENT.md §3).
+                                    </message>
+                                </requireProperty>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- These run for every module (00 §36: one `mvn verify` gate). -->
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-pmd-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <!-- CI compiler profile per 00 sections 10 and 26: zero warnings tolerated. -->
+        <profile>
+            <id>ci</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <compilerArgs>
+                                <arg>-Xlint:all</arg>
+                                <!--
+                                    05 §8 JavaDoc-presence gate (NC-004, ADR 0002 §5). Checkstyle cannot
+                                    verify JEP 467 Markdown (///) JavaDoc; javac doclint understands it
+                                    natively. Runs on public and protected API of the main sources.
+                                -->
+                                <arg>-Xdoclint:all/protected</arg>
+                                <arg>-Werror</arg>
+                            </compilerArgs>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!--
+          T-004 / 14 §3: native-library platform profiles. Each activates automatically on its
+          OS+arch and sets `native.classifier`, the Maven classifier the Phase 2/4 native-bearing
+          dependencies (OpenCV, ONNX Runtime, JavaFX) will consume. No native dependency is
+          declared yet; only the classifier scaffolding they plug into. An unsupported platform is
+          caught by the `unsupported-platform` profile below, failing the build with a clear
+          message rather than a runtime UnsatisfiedLinkError (00 §26, 14 §3).
+        -->
+        <profile>
+            <id>platform-windows-x86_64</id>
+            <activation>
+                <os>
+                    <family>windows</family>
+                    <arch>amd64</arch>
+                </os>
+            </activation>
+            <properties>
+                <native.classifier>windows-x86_64</native.classifier>
+                <javafx.platform>win</javafx.platform>
+            </properties>
+        </profile>
+        <profile>
+            <id>platform-macos-x86_64</id>
+            <activation>
+                <os>
+                    <family>mac</family>
+                    <arch>x86_64</arch>
+                </os>
+            </activation>
+            <properties>
+                <native.classifier>macos-x86_64</native.classifier>
+                <javafx.platform>mac</javafx.platform>
+            </properties>
+        </profile>
+        <profile>
+            <id>platform-macos-aarch64</id>
+            <activation>
+                <os>
+                    <family>mac</family>
+                    <arch>aarch64</arch>
+                </os>
+            </activation>
+            <properties>
+                <native.classifier>macos-aarch64</native.classifier>
+                <javafx.platform>mac-aarch64</javafx.platform>
+            </properties>
+        </profile>
+        <profile>
+            <id>platform-linux-x86_64</id>
+            <activation>
+                <os>
+                    <family>unix</family>
+                    <name>linux</name>
+                    <arch>amd64</arch>
+                </os>
+            </activation>
+            <properties>
+                <native.classifier>linux-x86_64</native.classifier>
+                <javafx.platform>linux</javafx.platform>
+            </properties>
+        </profile>
+    </profiles>
 </project>

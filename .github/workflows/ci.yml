@@ -1,0 +1,41 @@
+# Every-commit CI gate for the rPPG Desktop Vitals Monitor.
+#
+# Realises the blocking pipeline of 13_TESTING.md §5: compile all seven modules, run the
+# five-tool static-analysis chain (Spotless, Checkstyle, PMD, SpotBugs, ArchUnit), unit and
+# integration tests, and the JaCoCo coverage gates — all in a single `mvn verify` pass
+# (00_MASTER_PROMPT.md §36). A failure at any stage fails the job.
+#
+# This is a ready-to-run skeleton (T-003): the repository has no remote configured yet, so the
+# workflow activates the first time it is pushed to a GitHub remote. The pre-release gate of
+# 13 §6 (JMH benchmarks, cold-start measurement, per-platform jpackage dry runs) is a separate
+# workflow, added with Phase 5/6.
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Build & verify (Java 25)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out sources
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 25 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+
+      - name: Run the every-commit gate
+        run: |
+          chmod +x ./mvnw
+          ./mvnw --batch-mode --no-transfer-progress -P ci clean verify

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suppressions PUBLIC
+        "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+        "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+
+<!--
+  Checkstyle suppressions for the rPPG Desktop Vitals Monitor.
+
+  The package-info.java requirement (04 §5) governs the production package tree; test source
+  packages mirror it (04 §7) but are not themselves part of that tree and carry no package-info.
+  This suppression scopes the JavadocPackage check to main sources only. Every other rule still
+  applies to test code (no wildcard imports, no tabs, member order).
+-->
+<suppressions>
+    <suppress checks="JavadocPackage" files="[\\/]src[\\/]test[\\/]"/>
+</suppressions>

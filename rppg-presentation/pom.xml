@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>id.asr.rppgvitals</groupId>
+        <artifactId>rppg-parent</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>rppg-presentation</artifactId>
+    <name>rPPG Presentation (JavaFX)</name>
+    <description>
+        FXML views, ViewModels, and Controllers (03_ARCHITECTURE.md section 6.4). Depends on
+        rppg-application only among project modules — never on an infrastructure module. The
+        JavaFX and XChart dependencies (with platform classifiers) are added by the Phase 4
+        tasks (T-401..T-405) together with T-004's platform profiles.
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>id.asr.rppgvitals</groupId>
+            <artifactId>rppg-application</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+</project>

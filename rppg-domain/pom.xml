@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>id.asr.rppgvitals</groupId>
+        <artifactId>rppg-parent</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>rppg-domain</artifactId>
+    <name>rPPG Domain</name>
+    <description>
+        Framework-free domain core: value objects, ports, and SignalEstimator implementations
+        (03_ARCHITECTURE.md sections 3-4, 6.1). Depends on the JDK and Apache Commons Math only;
+        this pom never declaring JavaFX/OpenCV/ONNX/SQLite is the primary Dependency Rule
+        enforcement (04_PACKAGE_STRUCTURE.md section 8).
+    </description>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-math3</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!--
+                13 §7 / 00 §10: the Domain layer carries the strictest coverage bar in the project,
+                ≥ 90% line and ≥ 85% branch. The rule binds to `verify` and fails the build below
+                either threshold. Until Phase 1 domain classes land, the module compiles only
+                package-info files (no executable bytecode), so the bundle is empty and the check
+                is vacuously satisfied; it begins to bite the moment real domain code is added.
+            -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>jacoco-check-domain-coverage</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <rule>
+                                    <element>BUNDLE</element>
+                                    <limits>
+                                        <limit>
+                                            <counter>LINE</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.90</minimum>
+                                        </limit>
+                                        <limit>
+                                            <counter>BRANCH</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.85</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
