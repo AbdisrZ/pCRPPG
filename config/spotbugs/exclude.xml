@@ -19,4 +19,15 @@
         <Method name="applyMigration"/>
         <Bug pattern="SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE"/>
     </Match>
+
+    <!--
+      JavaFX MVVM: a ViewModel deliberately exposes its live JavaFX Property / ObservableList fields so
+      the View can bind to them (06_UI_GUIDELINE.md §8, 03_ARCHITECTURE.md §6.4). Returning a defensive
+      copy would break binding, which is the entire point of the pattern; SpotBugs' EI_EXPOSE rule does
+      not model JavaFX observables. Scoped to the presentation ViewModels only.
+    -->
+    <Match>
+        <Class name="~.*\.presentation\.javafx\..*ViewModel"/>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+    </Match>
 </FindBugsFilter>

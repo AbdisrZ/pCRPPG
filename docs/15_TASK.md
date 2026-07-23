@@ -99,10 +99,10 @@ Further breakdown of this phase happens once Phase 2 is `Done`, per §1's growth
 | ID | Task | Traces To | Status |
 |---|---|---|---|
 | T-401 | Build the First-Launch Disclosure screen. | `06 §6.1` | Not Started |
-| T-402 | Build the Live Measurement screen, covering every state in `06 §6.2`'s table. | `06 §6.2` | Not Started, depends on T-302 |
-| T-403 | Build the Session History screen. | `06 §6.3` | Not Started, depends on T-301 |
+| T-402 | Build the Live Measurement screen, covering every state in `06 §6.2`'s table. | `06 §6.2` | In Progress — `LiveMeasurementViewModel` (state table, observer marshaling) + `ConfidenceTier` done and tested (ADR 0009). FXML view + Controller + camera preview remain. |
+| T-403 | Build the Session History screen. | `06 §6.3` | In Progress — `SessionHistoryViewModel` done and tested (ADR 0009). FXML list view + Controller + delete-confirm remain. |
 | T-404 | Build the Session Detail screen, including XChart trend rendering. | `06 §6.4` | Not Started, depends on T-301 |
-| T-405 | Implement ViewModel-to-`Property` binding and the `Platform.runLater` marshaling convention across all screens. | `03 §6.4`, `11 §9` | Not Started, depends on T-401–T-404 |
+| T-405 | Implement ViewModel-to-`Property` binding and the `Platform.runLater` marshaling convention across all screens. | `03 §6.4`, `11 §9` | In Progress — `UiThreadExecutor` marshaling abstraction established (ADR 0009 §3); FXML bindings + the `Platform.runLater` implementation land with the launcher. |
 
 Further breakdown happens once Phase 3 is `Done`.
 
@@ -181,6 +181,7 @@ This is the sixteenth and final document of the set. `00_MASTER_PROMPT.md` opene
 | 1.0.7 | 2026-07-23 | NC-001 direction resolved (MediaPipe BlazeFace + Face Mesh via ONNX; ADR 0006); T-202 In Progress (validation pending). Docs-only. |
 | 1.0.8 | 2026-07-23 | T-302 part 1: `MeasurementObserver` + `MeasurementPipeline` core, `Frame` canonical RGB, `RoiSpatialAverager` (ADR 0007). Threaded orchestrator remains. |
 | 1.0.9 | 2026-07-23 | T-302/T-303/T-304 Done: threaded `LiveMeasurementOrchestrator` (2 virtual-thread executors, depth-3 drop-oldest queue, cooperative cancel + drain, ScopedValue) with deterministic concurrency tests (ADR 0008). Phase 3 complete except persistenceExecutor/use-case wiring (→ T-501). |
+| 1.0.10 | 2026-07-23 | Phase 4 ViewModel foundation: JavaFX 25.0.4 + XChart deps, `ConfidenceTier`, `UiThreadExecutor`, and the Live/History ViewModels, tested headless (ADR 0009). T-402/403/405 In Progress; FXML views/controllers/launcher remain (manual-checklist verified). Also fixed: rulesets moved build/→config/ (were gitignored). |
 
 ---
 

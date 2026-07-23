@@ -14,9 +14,8 @@
     <name>rPPG Presentation (JavaFX)</name>
     <description>
         FXML views, ViewModels, and Controllers (03_ARCHITECTURE.md section 6.4). Depends on
-        rppg-application only among project modules — never on an infrastructure module. The
-        JavaFX and XChart dependencies (with platform classifiers) are added by the Phase 4
-        tasks (T-401..T-405) together with T-004's platform profiles.
+        rppg-application only among project modules — never on an infrastructure module. JavaFX
+        modules carry the platform classifier from T-004's profiles (native.classifier / javafx.platform).
     </description>
 
     <dependencies>
@@ -24,6 +23,43 @@
             <groupId>id.asr.rppgvitals</groupId>
             <artifactId>rppg-application</artifactId>
             <version>${project.version}</version>
+        </dependency>
+
+        <!-- JavaFX: classifiers are not propagated transitively, so each module is declared explicitly. -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-base</artifactId>
+            <version>${javafx.version}</version>
+            <classifier>${javafx.platform}</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-graphics</artifactId>
+            <version>${javafx.version}</version>
+            <classifier>${javafx.platform}</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>${javafx.version}</version>
+            <classifier>${javafx.platform}</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-fxml</artifactId>
+            <version>${javafx.version}</version>
+            <classifier>${javafx.platform}</classifier>
+        </dependency>
+
+        <dependency>
+            <groupId>org.knowm.xchart</groupId>
+            <artifactId>xchart</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>
