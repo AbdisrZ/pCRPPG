@@ -117,6 +117,7 @@
                         <configuration>
                             <excludes>
                                 <exclude>**/Main.class</exclude>
+                                <exclude>**/Launcher.class</exclude>
                                 <exclude>**/CompositionRoot.class</exclude>
                             </excludes>
                         </configuration>
