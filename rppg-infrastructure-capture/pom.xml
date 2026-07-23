@@ -14,9 +14,7 @@
     <name>rPPG Infrastructure - Capture (OpenCV)</name>
     <description>
         OpenCvFrameSource adapter implementing the FrameSource port (03_ARCHITECTURE.md
-        section 6.3). The OpenCV dependency (with platform classifiers) is added by T-201
-        together with the platform profiles of T-004; it is deliberately absent from this
-        skeleton pom.
+        section 6.3), over the org.openpnp:opencv Java bindings (bundled native libraries).
     </description>
 
     <dependencies>
@@ -25,5 +23,34 @@
             <artifactId>rppg-domain</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.openpnp</groupId>
+            <artifactId>opencv</artifactId>
+        </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <!--
+                OpenCvFrameSource's VideoCapture I/O and device probe cannot be unit-tested without a
+                real camera (running them would activate a webcam), so it is excluded from the coverage
+                gate and verified with hardware via the manual checklist (13 §4). The testable pixel
+                conversion lives in OpenCvFrames, which stays covered. See ADR 0010.
+            -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>jacoco-check-line-floor</id>
+                        <configuration>
+                            <excludes>
+                                <exclude>**/OpenCvFrameSource.class</exclude>
+                            </excludes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>

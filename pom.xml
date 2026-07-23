@@ -37,6 +37,7 @@
         <!-- Library versions (00 §16: pinned exactly, no ranges). -->
         <commons-math3.version>3.6.1</commons-math3.version>
         <sqlite-jdbc.version>3.53.2.1</sqlite-jdbc.version>
+        <opencv.version>4.9.0-0</opencv.version>
         <javafx.version>25.0.4</javafx.version>
         <xchart.version>4.0.3</xchart.version>
         <junit.version>5.11.4</junit.version>
@@ -82,6 +83,11 @@
                 <groupId>org.knowm.xchart</groupId>
                 <artifactId>xchart</artifactId>
                 <version>${xchart.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.openpnp</groupId>
+                <artifactId>opencv</artifactId>
+                <version>${opencv.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.mockito</groupId>
