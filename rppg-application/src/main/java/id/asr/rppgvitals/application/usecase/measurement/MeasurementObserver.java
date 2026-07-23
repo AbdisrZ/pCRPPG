@@ -1,5 +1,7 @@
 package id.asr.rppgvitals.application.usecase.measurement;
 
+import id.asr.rppgvitals.domain.capture.Frame;
+import id.asr.rppgvitals.domain.detection.RegionOfInterest;
 import id.asr.rppgvitals.domain.estimation.HeartRateEstimate;
 import id.asr.rppgvitals.domain.signal.SignalQuality;
 
@@ -30,4 +32,15 @@ public interface MeasurementObserver {
 
     /// Called when a previously degrading condition is resolved and acquisition resumes.
     void onSessionRecovered();
+
+    /// Called once per captured frame with the frame and the ROI detected within it, for the live
+    /// camera preview and its bounding-box overlay (`06_UI_GUIDELINE.md §6.2`). This is a transient,
+    /// in-memory display signal only — it is never persisted (`02_SOFTWARE_REQUIREMENT.md` DR-1). The
+    /// default is a no-op so observers that do not render a preview need not implement it.
+    ///
+    /// @param frame the captured frame; never `null`
+    /// @param roi the region of interest detected in the frame, or `null` if none was detected
+    default void onPreviewFrame(Frame frame, RegionOfInterest roi) {
+        // No-op by default: only the live ViewModel renders the preview.
+    }
 }

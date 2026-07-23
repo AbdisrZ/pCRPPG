@@ -3,9 +3,19 @@ package id.asr.rppgvitals.presentation.javafx.dashboard;
 import java.util.Objects;
 import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.image.PixelFormat;
+import javafx.scene.image.WritableImage;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+
+import id.asr.rppgvitals.domain.capture.Frame;
+import id.asr.rppgvitals.domain.detection.RegionOfInterest;
 
 /// The JavaFX controller wiring `live-measurement.fxml` to the [LiveMeasurementViewModel]
 /// (`06_UI_GUIDELINE.md §6.2`, `00_MASTER_PROMPT.md §24`).
@@ -27,8 +37,12 @@ public final class LiveMeasurementController {
     @FXML
     private Label statusLabel;
 
+    @FXML
+    private Canvas previewCanvas;
+
     private LiveMeasurementViewModel viewModel;
     private ScreenNavigator navigator;
+    private WritableImage previewImage;
 
     /// Creates the controller; instantiated by the JavaFX `FXMLLoader`.
     public LiveMeasurementController() {}
@@ -77,7 +91,56 @@ public final class LiveMeasurementController {
                         .then("End")
                         .otherwise("Start"));
 
+        renderPreview(null);
+        viewModel.latestPreviewProperty().addListener((observable, previous, snapshot) -> renderPreview(snapshot));
+
         viewModel.refreshDevices();
+    }
+
+    private void renderPreview(PreviewSnapshot snapshot) {
+        GraphicsContext gc = previewCanvas.getGraphicsContext2D();
+        double width = previewCanvas.getWidth();
+        double height = previewCanvas.getHeight();
+        if (snapshot == null) {
+            gc.setFill(Color.web("#1B1B1B"));
+            gc.fillRect(0.0, 0.0, width, height);
+            return;
+        }
+        Frame frame = snapshot.frame();
+        gc.drawImage(imageOf(frame), 0.0, 0.0, width, height);
+        drawRegion(gc, snapshot.roi(), width / frame.width(), height / frame.height());
+        drawReadout(gc);
+    }
+
+    private WritableImage imageOf(Frame frame) {
+        int w = frame.width();
+        int h = frame.height();
+        if (previewImage == null || (int) previewImage.getWidth() != w || (int) previewImage.getHeight() != h) {
+            previewImage = new WritableImage(w, h);
+        }
+        previewImage.getPixelWriter().setPixels(0, 0, w, h, PixelFormat.getByteRgbInstance(), frame.pixels(), 0, w * 3);
+        return previewImage;
+    }
+
+    private void drawRegion(GraphicsContext gc, RegionOfInterest roi, double scaleX, double scaleY) {
+        if (roi == null) {
+            return;
+        }
+        gc.setStroke(Color.LIMEGREEN);
+        gc.setLineWidth(2.0);
+        gc.strokeRect(roi.x() * scaleX, roi.y() * scaleY, roi.width() * scaleX, roi.height() * scaleY);
+    }
+
+    private void drawReadout(GraphicsContext gc) {
+        Integer bpm = viewModel.currentHeartRateBpmProperty().get();
+        ConfidenceTier tier = viewModel.confidenceTierProperty().get();
+        String text = bpm == null ? "— — bpm" : bpm + " bpm";
+        Color colour = tier == null ? Color.web("#B0BEC5") : Color.web(tier.colorHex());
+        gc.setFill(Color.color(0.0, 0.0, 0.0, 0.45));
+        gc.fillRect(6.0, 6.0, 132.0, 30.0);
+        gc.setFill(colour);
+        gc.setFont(Font.font("System", FontWeight.BOLD, 20.0));
+        gc.fillText(text, 12.0, 28.0);
     }
 
     @FXML

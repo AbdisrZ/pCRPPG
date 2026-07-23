@@ -32,12 +32,13 @@ public final class OpenCvFrameSource implements FrameSource {
 
     /// The capture backend to request. On Windows the default `CAP_ANY` probes every backend including
     /// OBSENSOR (Orbbec depth cameras), which floods the log with "Camera index out of range" for absent
-    /// devices and falls back to the less reliable Media Foundation path; DirectShow is quieter and more
-    /// dependable for consumer webcams. Elsewhere `CAP_ANY` lets OpenCV pick the platform's native
-    /// backend (V4L2 on Linux, AVFoundation on macOS).
+    /// devices; and DirectShow in this OpenCV build reports "can't be used to capture by index". Media
+    /// Foundation (`CAP_MSMF`) is the backend that actually opens consumer webcams by index here, so it
+    /// is requested directly. Elsewhere `CAP_ANY` lets OpenCV pick the platform's native backend (V4L2
+    /// on Linux, AVFoundation on macOS).
     private static final int CAPTURE_BACKEND =
             System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("win")
-                    ? Videoio.CAP_DSHOW
+                    ? Videoio.CAP_MSMF
                     : Videoio.CAP_ANY;
 
     static {

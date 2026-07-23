@@ -2,6 +2,7 @@ package id.asr.rppgvitals.presentation.javafx.dashboard;
 
 import java.util.Locale;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -17,6 +18,8 @@ import id.asr.rppgvitals.application.usecase.measurement.MeasurementObserver;
 import id.asr.rppgvitals.application.usecase.measurement.SessionPersistenceCoordinator;
 import id.asr.rppgvitals.application.usecase.measurement.StartMeasurementSessionUseCase;
 import id.asr.rppgvitals.domain.capture.CaptureConfiguration;
+import id.asr.rppgvitals.domain.capture.Frame;
+import id.asr.rppgvitals.domain.detection.RegionOfInterest;
 import id.asr.rppgvitals.domain.estimation.HeartRateEstimate;
 import id.asr.rppgvitals.domain.session.MeasurementSession;
 import id.asr.rppgvitals.domain.signal.SignalQuality;
@@ -58,6 +61,11 @@ public final class LiveMeasurementViewModel implements MeasurementObserver {
     private final BooleanProperty sessionActive = new SimpleBooleanProperty(false);
     private final ObservableList<String> availableDevices = FXCollections.observableArrayList();
     private final StringProperty selectedDevice = new SimpleStringProperty();
+    private final ObjectProperty<PreviewSnapshot> latestPreview = new SimpleObjectProperty<>();
+
+    // Coalesces the high-rate preview stream: while an update is still queued for the FX thread, later
+    // frames replace the pending one instead of piling up more runLater tasks (11 §9).
+    private final AtomicReference<PreviewSnapshot> pendingPreview = new AtomicReference<>();
 
     private MeasurementSession currentSession;
 
@@ -118,6 +126,7 @@ public final class LiveMeasurementViewModel implements MeasurementObserver {
         currentHeartRateBpm.set(null);
         confidenceTier.set(null);
         signalStatusMessage.set(SAVING_MESSAGE);
+        clearPreview();
         persistenceCoordinator.endAsync(
                 ending,
                 () -> uiThreadExecutor.runOnUiThread(() -> signalStatusMessage.set(SAVED_MESSAGE)),
@@ -134,7 +143,13 @@ public final class LiveMeasurementViewModel implements MeasurementObserver {
         MeasurementSession ending = currentSession;
         currentSession = null;
         sessionActive.set(false);
+        clearPreview();
         persistenceCoordinator.endNow(ending);
+    }
+
+    private void clearPreview() {
+        pendingPreview.set(null);
+        latestPreview.set(null);
     }
 
     /// {@inheritDoc}
@@ -174,6 +189,17 @@ public final class LiveMeasurementViewModel implements MeasurementObserver {
     @Override
     public void onSessionRecovered() {
         uiThreadExecutor.runOnUiThread(() -> clearReading(SEARCHING_MESSAGE));
+    }
+
+    /// {@inheritDoc}
+    @Override
+    public void onPreviewFrame(Frame frame, RegionOfInterest roi) {
+        PreviewSnapshot snapshot = new PreviewSnapshot(frame, roi);
+        // Only schedule an FX-thread update when none is already pending; the update then publishes the
+        // most recent frame, dropping any intermediate ones (coalescing).
+        if (pendingPreview.getAndSet(snapshot) == null) {
+            uiThreadExecutor.runOnUiThread(() -> latestPreview.set(pendingPreview.getAndSet(null)));
+        }
     }
 
     private void clearReading(String message) {
@@ -227,5 +253,13 @@ public final class LiveMeasurementViewModel implements MeasurementObserver {
     /// @return the bindable selected-device property
     public StringProperty selectedDeviceProperty() {
         return selectedDevice;
+    }
+
+    /// The latest camera frame and detected ROI for the live preview, or `null` when no session is
+    /// running (`06 §6.2`).
+    ///
+    /// @return the bindable preview-snapshot property
+    public ObjectProperty<PreviewSnapshot> latestPreviewProperty() {
+        return latestPreview;
     }
 }

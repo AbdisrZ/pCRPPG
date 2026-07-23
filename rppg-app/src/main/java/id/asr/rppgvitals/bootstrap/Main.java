@@ -43,7 +43,7 @@ public final class Main extends Application implements ScreenNavigator {
         SessionHistoryController historyController = historyLoader.getController();
         historyController.initView(composition.sessionHistoryViewModel(), this);
 
-        this.scene = new Scene(liveRoot, 480.0, 440.0);
+        this.scene = new Scene(liveRoot, 480.0, 640.0);
         stage.setTitle("rPPG Vitals Monitor");
         stage.setScene(scene);
         stage.show();

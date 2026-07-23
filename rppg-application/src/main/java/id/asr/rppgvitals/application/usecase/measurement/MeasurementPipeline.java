@@ -70,6 +70,7 @@ final class MeasurementPipeline {
     void onFrame(Frame frame) {
         Objects.requireNonNull(frame, "frame");
         Optional<RegionOfInterest> roi = inferenceEngine.detectRegionOfInterest(frame);
+        observer.onPreviewFrame(frame, roi.orElse(null));
         roi.ifPresent(region -> addSample(averager.sample(frame, region)));
 
         if (++framesSinceEstimate >= estimateIntervalFrames) {

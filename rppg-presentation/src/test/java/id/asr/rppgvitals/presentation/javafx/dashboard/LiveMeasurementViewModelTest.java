@@ -24,6 +24,8 @@ import id.asr.rppgvitals.application.usecase.measurement.LiveMeasurementOrchestr
 import id.asr.rppgvitals.application.usecase.measurement.SessionPersistenceCoordinator;
 import id.asr.rppgvitals.application.usecase.measurement.StartMeasurementSessionUseCase;
 import id.asr.rppgvitals.domain.capture.CaptureConfiguration;
+import id.asr.rppgvitals.domain.capture.Frame;
+import id.asr.rppgvitals.domain.detection.RegionOfInterest;
 import id.asr.rppgvitals.domain.estimation.HeartRateEstimate;
 import id.asr.rppgvitals.domain.session.MeasurementSession;
 import id.asr.rppgvitals.domain.signal.SignalQuality;
@@ -159,6 +161,40 @@ class LiveMeasurementViewModelTest {
         verify(orchestrator).stop();
         verify(endUseCase).execute(session);
         assertFalse(viewModel.sessionActiveProperty().get());
+    }
+
+    @Test
+    void onPreviewFrame_publishesTheLatestSnapshot() {
+        Frame frame = new Frame(new byte[2 * 2 * Frame.CHANNELS], 2, 2, 0L, NOW);
+        RegionOfInterest roi = new RegionOfInterest(0, 0, 1, 1, 0.9);
+
+        viewModel.onPreviewFrame(frame, roi);
+
+        PreviewSnapshot snapshot = viewModel.latestPreviewProperty().get();
+        assertEquals(frame, snapshot.frame());
+        assertEquals(roi, snapshot.roi());
+    }
+
+    @Test
+    void onPreviewFrame_toleratesAnAbsentRegion() {
+        Frame frame = new Frame(new byte[2 * 2 * Frame.CHANNELS], 2, 2, 0L, NOW);
+
+        viewModel.onPreviewFrame(frame, null);
+
+        assertNull(viewModel.latestPreviewProperty().get().roi());
+    }
+
+    @Test
+    void endSession_clearsThePreview() {
+        MeasurementSession session = new MeasurementSession(UUID.randomUUID(), "cam-0", NOW);
+        when(startUseCase.execute("cam-0")).thenReturn(session);
+        viewModel.selectedDeviceProperty().set("cam-0");
+        viewModel.startSession();
+        viewModel.onPreviewFrame(new Frame(new byte[2 * 2 * Frame.CHANNELS], 2, 2, 0L, NOW), null);
+
+        viewModel.endSession();
+
+        assertNull(viewModel.latestPreviewProperty().get());
     }
 
     @Test
