@@ -62,4 +62,29 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <!--
+                The FXML Controller and the Platform.runLater executor require a running JavaFX toolkit
+                and are verified via the manual UI checklist (13 §4), not unit tests. Excluded from the
+                coverage gate; the ViewModels and ConfidenceTier stay covered.
+            -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>jacoco-check-line-floor</id>
+                        <configuration>
+                            <excludes>
+                                <exclude>**/LiveMeasurementController.class</exclude>
+                                <exclude>**/PlatformUiThreadExecutor.class</exclude>
+                            </excludes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>
