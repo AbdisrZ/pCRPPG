@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="id.asr.rppgvitals.presentation.javafx.history.SessionHistoryController"
+      spacing="12.0" alignment="TOP_CENTER">
+    <padding>
+        <Insets top="20.0" right="20.0" bottom="16.0" left="20.0"/>
+    </padding>
+
+    <HBox spacing="8.0" alignment="CENTER_LEFT">
+        <Button fx:id="backButton" text="◄ Back" onAction="#onBack"/>
+        <Label text="Session History" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button fx:id="deleteButton" text="Delete" onAction="#onDelete"/>
+    </HBox>
+
+    <TableView fx:id="sessionsTable" VBox.vgrow="ALWAYS">
+        <columns>
+            <TableColumn fx:id="dateColumn" text="Date &amp; time" prefWidth="180.0"/>
+            <TableColumn fx:id="durationColumn" text="Duration" prefWidth="90.0"/>
+            <TableColumn fx:id="heartRateColumn" text="Mean HR" prefWidth="110.0"/>
+            <TableColumn fx:id="confidenceColumn" text="Confidence" prefWidth="100.0"/>
+        </columns>
+    </TableView>
+
+    <Label fx:id="emptyLabel" text="No sessions recorded yet"
+           style="-fx-font-size: 13px; -fx-text-fill: #607D8B;"/>
+
+    <Label text="Estimate only, not medical-grade"
+           style="-fx-font-size: 11px; -fx-text-fill: #607D8B;">
+        <VBox.margin>
+            <Insets top="4.0"/>
+        </VBox.margin>
+    </Label>
+</VBox>

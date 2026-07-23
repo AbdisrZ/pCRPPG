@@ -28,16 +28,19 @@ public final class LiveMeasurementController {
     private Label statusLabel;
 
     private LiveMeasurementViewModel viewModel;
+    private ScreenNavigator navigator;
 
     /// Creates the controller; instantiated by the JavaFX `FXMLLoader`.
     public LiveMeasurementController() {}
 
-    /// Injects the ViewModel and binds the view to it. Called by the composition root after the FXML
-    /// is loaded.
+    /// Injects the ViewModel and navigator and binds the view. Called by the composition root after the
+    /// FXML is loaded.
     ///
     /// @param viewModel the live-measurement ViewModel; never `null`
-    public void setViewModel(LiveMeasurementViewModel viewModel) {
+    /// @param navigator the screen navigator for the view-history action; never `null`
+    public void initView(LiveMeasurementViewModel viewModel, ScreenNavigator navigator) {
         this.viewModel = Objects.requireNonNull(viewModel, "viewModel");
+        this.navigator = Objects.requireNonNull(navigator, "navigator");
         bind();
     }
 
@@ -89,5 +92,10 @@ public final class LiveMeasurementController {
     @FXML
     void onRefreshDevices() {
         viewModel.refreshDevices();
+    }
+
+    @FXML
+    void onViewHistory() {
+        navigator.showSessionHistory();
     }
 }

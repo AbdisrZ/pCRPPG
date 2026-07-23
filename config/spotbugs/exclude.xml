@@ -30,4 +30,28 @@
         <Class name="~.*\.presentation\.javafx\..*ViewModel"/>
         <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
     </Match>
+
+    <!--
+      JavaFX FXML controllers are instantiated by the FXMLLoader through their no-arg constructor; their
+      collaborators (ViewModel, navigator) are injected via initView() immediately after load and before
+      the scene is ever shown, so no @FXML handler can fire while they are null (06_UI_GUIDELINE.md §8,
+      11_THREADING.md §9). SpotBugs' UWF rule does not model this framework-driven, construct-then-inject
+      lifecycle. Scoped to the presentation Controllers only.
+    -->
+    <Match>
+        <Class name="~.*\.presentation\.javafx\..*Controller"/>
+        <Bug pattern="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR"/>
+    </Match>
+
+    <!--
+      The JavaFX Application launcher is constructed reflectively with a no-arg constructor and then
+      initialised in start(); its stage/scene/composition fields are necessarily set there, not in the
+      constructor, and are dereferenced only by navigation callbacks that cannot fire until after the
+      scene is shown (03_ARCHITECTURE.md §8, 06_UI_GUIDELINE.md §5). Same construct-then-initialise
+      lifecycle as the FXML controllers above; scoped to the launcher class only.
+    -->
+    <Match>
+        <Class name="id.asr.rppgvitals.bootstrap.Main"/>
+        <Bug pattern="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR"/>
+    </Match>
 </FindBugsFilter>

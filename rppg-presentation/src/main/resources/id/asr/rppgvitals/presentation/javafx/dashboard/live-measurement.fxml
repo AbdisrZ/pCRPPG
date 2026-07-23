@@ -25,6 +25,8 @@
     <Label fx:id="heartRateLabel" style="-fx-font-size: 64px; -fx-font-weight: bold;"/>
     <Label fx:id="statusLabel" wrapText="true" style="-fx-font-size: 14px;"/>
 
+    <Button fx:id="historyButton" text="View history" onAction="#onViewHistory"/>
+
     <Label text="Estimate only, not medical-grade"
            style="-fx-font-size: 11px; -fx-text-fill: #607D8B;">
         <VBox.margin>

@@ -13,6 +13,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import id.asr.rppgvitals.application.usecase.device.ListAvailableCameraDevicesUseCase;
+import id.asr.rppgvitals.application.usecase.history.DeleteSessionUseCase;
+import id.asr.rppgvitals.application.usecase.history.GetSessionDetailUseCase;
+import id.asr.rppgvitals.application.usecase.history.ListSessionHistoryUseCase;
 import id.asr.rppgvitals.application.usecase.measurement.EndMeasurementSessionUseCase;
 import id.asr.rppgvitals.application.usecase.measurement.LiveMeasurementOrchestrator;
 import id.asr.rppgvitals.application.usecase.measurement.SessionPersistenceCoordinator;
@@ -24,6 +27,7 @@ import id.asr.rppgvitals.infrastructure.capture.opencv.OpenCvFrameSource;
 import id.asr.rppgvitals.infrastructure.persistence.sqlite.SqliteMeasurementRepository;
 import id.asr.rppgvitals.presentation.javafx.dashboard.LiveMeasurementViewModel;
 import id.asr.rppgvitals.presentation.javafx.dashboard.PlatformUiThreadExecutor;
+import id.asr.rppgvitals.presentation.javafx.history.SessionHistoryViewModel;
 
 /// Assembles the application from its parts and owns their lifecycle (`03_ARCHITECTURE.md §8`,
 /// `00_MASTER_PROMPT.md §30`): the SQLite connection, the OpenCV capture adapter, the placeholder
@@ -41,6 +45,7 @@ final class CompositionRoot {
     private final LiveMeasurementOrchestrator orchestrator;
     private final ExecutorService persistenceExecutor;
     private final LiveMeasurementViewModel liveMeasurementViewModel;
+    private final SessionHistoryViewModel sessionHistoryViewModel;
 
     CompositionRoot() {
         this.connection = openDatabase();
@@ -58,10 +63,18 @@ final class CompositionRoot {
                 new ListAvailableCameraDevicesUseCase(frameSource),
                 orchestrator,
                 new PlatformUiThreadExecutor());
+        this.sessionHistoryViewModel = new SessionHistoryViewModel(
+                new ListSessionHistoryUseCase(repository),
+                new DeleteSessionUseCase(repository),
+                new GetSessionDetailUseCase(repository));
     }
 
     LiveMeasurementViewModel liveMeasurementViewModel() {
         return liveMeasurementViewModel;
+    }
+
+    SessionHistoryViewModel sessionHistoryViewModel() {
+        return sessionHistoryViewModel;
     }
 
     void shutdown() {

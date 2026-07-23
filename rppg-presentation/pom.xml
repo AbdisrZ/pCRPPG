@@ -79,6 +79,8 @@
                         <configuration>
                             <excludes>
                                 <exclude>**/LiveMeasurementController.class</exclude>
+                                <exclude>**/SessionHistoryController.class</exclude>
+                                <exclude>**/SessionHistoryController$*.class</exclude>
                                 <exclude>**/PlatformUiThreadExecutor.class</exclude>
                             </excludes>
                         </configuration>
