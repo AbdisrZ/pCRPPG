@@ -1,0 +1,155 @@
+/*
+ * Application theme for the rPPG Desktop Vitals Monitor (06_UI_GUIDELINE.md).
+ * A modern dark, card-based look — JavaFX CSS, in the spirit of a Tailwind/Bootstrap palette.
+ */
+
+.root {
+    -fx-font-family: "Segoe UI", "Inter", sans-serif;
+    -fx-background-color: linear-gradient(to bottom right, #0f172a, #1e293b);
+    -fx-font-size: 13px;
+}
+
+/* Text ------------------------------------------------------------------- */
+.h1 {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #f1f5f9;
+}
+
+.subtitle {
+    -fx-font-size: 12px;
+    -fx-text-fill: #94a3b8;
+}
+
+.status {
+    -fx-font-size: 14px;
+    -fx-text-fill: #cbd5e1;
+}
+
+.section-label {
+    -fx-font-size: 11px;
+    -fx-text-fill: #64748b;
+    -fx-font-weight: bold;
+}
+
+.hr-readout {
+    -fx-font-size: 66px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #e2e8f0;
+}
+
+.disclaimer {
+    -fx-font-size: 11px;
+    -fx-text-fill: #64748b;
+    -fx-font-style: italic;
+}
+
+/* Cards ------------------------------------------------------------------ */
+.card {
+    -fx-background-color: #1e293b;
+    -fx-background-radius: 14;
+    -fx-border-color: #334155;
+    -fx-border-radius: 14;
+    -fx-padding: 16;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.45), 16, 0, 0, 6);
+}
+
+/* Buttons ---------------------------------------------------------------- */
+.button {
+    -fx-background-radius: 9;
+    -fx-padding: 8 18 8 18;
+    -fx-cursor: hand;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+    -fx-text-fill: #e2e8f0;
+    -fx-background-color: #334155;
+}
+
+.button:hover {
+    -fx-background-color: #3e4c63;
+}
+
+.btn-primary {
+    -fx-background-color: linear-gradient(to bottom, #6366f1, #4f46e5);
+    -fx-text-fill: white;
+}
+
+.btn-primary:hover {
+    -fx-background-color: linear-gradient(to bottom, #7376f4, #5b52e8);
+}
+
+.btn-danger {
+    -fx-background-color: #ef4444;
+    -fx-text-fill: white;
+}
+
+.btn-danger:hover {
+    -fx-background-color: #f05a5a;
+}
+
+.button:disabled {
+    -fx-opacity: 0.45;
+}
+
+/* Combo box -------------------------------------------------------------- */
+.combo-box {
+    -fx-background-color: #334155;
+    -fx-background-radius: 9;
+    -fx-text-fill: #e2e8f0;
+    -fx-padding: 2 6 2 6;
+}
+
+.combo-box .list-cell {
+    -fx-text-fill: #e2e8f0;
+    -fx-background-color: transparent;
+}
+
+.combo-box-popup .list-view {
+    -fx-background-color: #1e293b;
+    -fx-border-color: #334155;
+}
+
+.combo-box-popup .list-cell:hover {
+    -fx-background-color: #4f46e5;
+    -fx-text-fill: white;
+}
+
+/* Table ------------------------------------------------------------------ */
+.table-view {
+    -fx-background-color: transparent;
+    -fx-border-color: #334155;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: #0f172a;
+    -fx-background-radius: 10 10 0 0;
+}
+
+.table-view .column-header .label {
+    -fx-text-fill: #94a3b8;
+    -fx-font-weight: bold;
+}
+
+.table-view .table-cell {
+    -fx-text-fill: #cbd5e1;
+    -fx-border-color: transparent;
+}
+
+.table-row-cell {
+    -fx-background-color: #1e293b;
+    -fx-border-color: transparent transparent #273449 transparent;
+}
+
+.table-row-cell:odd {
+    -fx-background-color: #223049;
+}
+
+.table-row-cell:selected {
+    -fx-background-color: #4f46e5;
+}
+
+.table-row-cell:selected .table-cell {
+    -fx-text-fill: white;
+}

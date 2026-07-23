@@ -91,12 +91,49 @@ public final class YuNetFaceInferenceEngine implements InferenceEngine {
                 bestRow = row;
             }
         }
-        int x = clamp((int) Math.round(faces.get(bestRow, 0)[0]), 0, frameWidth - 1);
-        int y = clamp((int) Math.round(faces.get(bestRow, 1)[0]), 0, frameHeight - 1);
-        int width = clamp((int) Math.round(faces.get(bestRow, 2)[0]), 1, frameWidth - x);
-        int height = clamp((int) Math.round(faces.get(bestRow, 3)[0]), 1, frameHeight - y);
         double confidence = Math.max(0.0, Math.min(1.0, bestScore));
-        return Optional.of(new RegionOfInterest(x, y, width, height, confidence));
+        return Optional.of(foreheadRegion(faces, bestRow, frameWidth, frameHeight, confidence));
+    }
+
+    /// Derives the forehead ROI from the detected eye landmarks (`09_AI_INTEGRATION.md §6`): the
+    /// forehead is the strongest, most motion-stable rPPG region (`07 §4`). Falls back to the upper
+    /// third of the face box when the landmarks are too close together to be trustworthy.
+    private static RegionOfInterest foreheadRegion(
+            Mat faces, int row, int frameWidth, int frameHeight, double confidence) {
+        double rightEyeX = faces.get(row, 4)[0];
+        double rightEyeY = faces.get(row, 5)[0];
+        double leftEyeX = faces.get(row, 6)[0];
+        double leftEyeY = faces.get(row, 7)[0];
+        double eyeSpan = Math.hypot(leftEyeX - rightEyeX, leftEyeY - rightEyeY);
+
+        int faceX = (int) Math.round(faces.get(row, 0)[0]);
+        int faceY = (int) Math.round(faces.get(row, 1)[0]);
+        int faceW = (int) Math.round(faces.get(row, 2)[0]);
+        int faceH = (int) Math.round(faces.get(row, 3)[0]);
+
+        double boxX;
+        double boxY;
+        double boxW;
+        double boxH;
+        if (eyeSpan >= 12.0) {
+            double eyeCentreX = (rightEyeX + leftEyeX) / 2.0;
+            double eyeCentreY = (rightEyeY + leftEyeY) / 2.0;
+            boxW = eyeSpan * 1.1;
+            boxH = eyeSpan * 0.6;
+            boxX = eyeCentreX - boxW / 2.0;
+            boxY = eyeCentreY - eyeSpan * 0.9 - boxH / 2.0;
+        } else {
+            boxW = faceW * 0.6;
+            boxH = faceH * 0.22;
+            boxX = faceX + (faceW - boxW) / 2.0;
+            boxY = faceY + faceH * 0.12;
+        }
+
+        int x = clamp((int) Math.round(boxX), 0, frameWidth - 1);
+        int y = clamp((int) Math.round(boxY), 0, frameHeight - 1);
+        int width = clamp((int) Math.round(boxW), 1, frameWidth - x);
+        int height = clamp((int) Math.round(boxH), 1, frameHeight - y);
+        return new RegionOfInterest(x, y, width, height, confidence);
     }
 
     private static Mat toBgrMat(Frame frame) {

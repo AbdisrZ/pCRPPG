@@ -11,34 +11,32 @@
 <VBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="id.asr.rppgvitals.presentation.javafx.history.SessionHistoryController"
-      spacing="12.0" alignment="TOP_CENTER">
+      spacing="14.0" alignment="TOP_CENTER">
     <padding>
-        <Insets top="20.0" right="20.0" bottom="16.0" left="20.0"/>
+        <Insets top="18.0" right="20.0" bottom="16.0" left="20.0"/>
     </padding>
 
-    <HBox spacing="8.0" alignment="CENTER_LEFT">
-        <Button fx:id="backButton" text="◄ Back" onAction="#onBack"/>
-        <Label text="Session History" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+    <HBox spacing="10.0" alignment="CENTER_LEFT">
+        <Button fx:id="backButton" text="◂ Back" onAction="#onBack"/>
+        <VBox spacing="1.0">
+            <Label text="Session History" styleClass="h1"/>
+            <Label text="Your saved measurements" styleClass="subtitle"/>
+        </VBox>
         <Region HBox.hgrow="ALWAYS"/>
-        <Button fx:id="deleteButton" text="Delete" onAction="#onDelete"/>
+        <Button fx:id="deleteButton" text="Delete" styleClass="btn-danger" onAction="#onDelete"/>
     </HBox>
 
-    <TableView fx:id="sessionsTable" VBox.vgrow="ALWAYS">
-        <columns>
-            <TableColumn fx:id="dateColumn" text="Date &amp; time" prefWidth="180.0"/>
-            <TableColumn fx:id="durationColumn" text="Duration" prefWidth="90.0"/>
-            <TableColumn fx:id="heartRateColumn" text="Mean HR" prefWidth="110.0"/>
-            <TableColumn fx:id="confidenceColumn" text="Confidence" prefWidth="100.0"/>
-        </columns>
-    </TableView>
+    <VBox spacing="8.0" alignment="CENTER" styleClass="card" VBox.vgrow="ALWAYS">
+        <TableView fx:id="sessionsTable" VBox.vgrow="ALWAYS">
+            <columns>
+                <TableColumn fx:id="dateColumn" text="Date &amp; time" prefWidth="190.0"/>
+                <TableColumn fx:id="durationColumn" text="Duration" prefWidth="95.0"/>
+                <TableColumn fx:id="heartRateColumn" text="Mean HR" prefWidth="115.0"/>
+                <TableColumn fx:id="confidenceColumn" text="Confidence" prefWidth="105.0"/>
+            </columns>
+        </TableView>
+        <Label fx:id="emptyLabel" text="No sessions recorded yet" styleClass="subtitle"/>
+    </VBox>
 
-    <Label fx:id="emptyLabel" text="No sessions recorded yet"
-           style="-fx-font-size: 13px; -fx-text-fill: #607D8B;"/>
-
-    <Label text="Estimate only, not medical-grade"
-           style="-fx-font-size: 11px; -fx-text-fill: #607D8B;">
-        <VBox.margin>
-            <Insets top="4.0"/>
-        </VBox.margin>
-    </Label>
+    <Label text="Estimate only, not medical-grade" styleClass="disclaimer"/>
 </VBox>

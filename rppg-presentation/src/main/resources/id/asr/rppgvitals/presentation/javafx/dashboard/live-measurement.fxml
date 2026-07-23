@@ -5,6 +5,7 @@
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
 <VBox xmlns="http://javafx.com/javafx"
@@ -12,31 +13,35 @@
       fx:controller="id.asr.rppgvitals.presentation.javafx.dashboard.LiveMeasurementController"
       spacing="14.0" alignment="TOP_CENTER">
     <padding>
-        <Insets top="20.0" right="20.0" bottom="16.0" left="20.0"/>
+        <Insets top="18.0" right="20.0" bottom="16.0" left="20.0"/>
     </padding>
 
-    <Label text="rPPG Vitals Monitor" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
-
-    <HBox spacing="8.0" alignment="CENTER">
-        <ComboBox fx:id="deviceSelector" promptText="Select a camera"/>
-        <Button fx:id="refreshButton" text="Refresh" onAction="#onRefreshDevices"/>
-        <Button fx:id="startStopButton" onAction="#onStartStop"/>
+    <HBox alignment="CENTER_LEFT" spacing="10.0">
+        <VBox spacing="1.0">
+            <Label text="rPPG Vitals Monitor" styleClass="h1"/>
+            <Label text="Live heart-rate estimate from your webcam" styleClass="subtitle"/>
+        </VBox>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button fx:id="historyButton" text="History ▸" onAction="#onViewHistory"/>
     </HBox>
 
-    <Canvas fx:id="previewCanvas" width="560.0" height="420.0"/>
+    <HBox spacing="8.0" alignment="CENTER" styleClass="card">
+        <ComboBox fx:id="deviceSelector" promptText="Select a camera"/>
+        <Button fx:id="refreshButton" text="Refresh" onAction="#onRefreshDevices"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button fx:id="startStopButton" styleClass="btn-primary" onAction="#onStartStop"/>
+    </HBox>
 
-    <Label fx:id="heartRateLabel" style="-fx-font-size: 64px; -fx-font-weight: bold;"/>
-    <Label fx:id="statusLabel" wrapText="true" style="-fx-font-size: 14px;"/>
+    <VBox spacing="10.0" alignment="CENTER" styleClass="card">
+        <Canvas fx:id="previewCanvas" width="560.0" height="420.0"/>
+        <Label fx:id="heartRateLabel" styleClass="hr-readout"/>
+        <Label fx:id="statusLabel" wrapText="true" styleClass="status"/>
+    </VBox>
 
-    <Label text="Heart-rate trend (bpm)" style="-fx-font-size: 11px; -fx-text-fill: #607D8B;"/>
-    <Canvas fx:id="trendCanvas" width="560.0" height="90.0"/>
+    <VBox spacing="6.0" styleClass="card">
+        <Label text="HEART-RATE TREND (BPM)" styleClass="section-label"/>
+        <Canvas fx:id="trendCanvas" width="560.0" height="90.0"/>
+    </VBox>
 
-    <Button fx:id="historyButton" text="View history" onAction="#onViewHistory"/>
-
-    <Label text="Estimate only, not medical-grade"
-           style="-fx-font-size: 11px; -fx-text-fill: #607D8B;">
-        <VBox.margin>
-            <Insets top="8.0"/>
-        </VBox.margin>
-    </Label>
+    <Label text="Estimate only, not medical-grade" styleClass="disclaimer"/>
 </VBox>

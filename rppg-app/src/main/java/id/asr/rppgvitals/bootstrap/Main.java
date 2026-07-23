@@ -44,6 +44,8 @@ public final class Main extends Application implements ScreenNavigator {
         historyController.initView(composition.sessionHistoryViewModel(), this);
 
         this.scene = new Scene(liveRoot, 600.0, 820.0);
+        scene.getStylesheets()
+                .add(LiveMeasurementController.class.getResource("app.css").toExternalForm());
         stage.setTitle("rPPG Vitals Monitor");
         stage.setScene(scene);
         stage.show();

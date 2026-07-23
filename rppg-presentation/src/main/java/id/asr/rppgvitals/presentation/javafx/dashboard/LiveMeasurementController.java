@@ -84,14 +84,16 @@ public final class LiveMeasurementController {
                             return bpm == null ? "— —" : bpm + " bpm";
                         },
                         viewModel.currentHeartRateBpmProperty()));
+        // Only the colour is set inline (by confidence tier); the font sizing comes from the .hr-readout
+        // stylesheet class, which inline styles do not override for properties they leave unset.
         heartRateLabel
                 .styleProperty()
                 .bind(Bindings.createStringBinding(
                         () -> {
                             ConfidenceTier tier =
                                     viewModel.confidenceTierProperty().get();
-                            String colour = tier == null ? "#607D8B" : tier.colorHex();
-                            return "-fx-font-size: 64px; -fx-font-weight: bold; -fx-text-fill: " + colour + ";";
+                            String colour = tier == null ? "#94A3B8" : tier.colorHex();
+                            return "-fx-text-fill: " + colour + ";";
                         },
                         viewModel.confidenceTierProperty()));
 
