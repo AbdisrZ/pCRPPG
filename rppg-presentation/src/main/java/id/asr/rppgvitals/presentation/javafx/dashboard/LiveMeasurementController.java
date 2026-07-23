@@ -1,5 +1,8 @@
 package id.asr.rppgvitals.presentation.javafx.dashboard;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.Locale;
 import java.util.Objects;
 import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
@@ -25,6 +28,10 @@ import id.asr.rppgvitals.domain.detection.RegionOfInterest;
 /// toolkit; verified via the manual UI checklist, `13_TESTING.md §4`).
 public final class LiveMeasurementController {
 
+    private static final int TREND_CAPACITY = 240;
+    private static final double TREND_MIN_BPM = 40.0;
+    private static final double TREND_MAX_BPM = 180.0;
+
     @FXML
     private ComboBox<String> deviceSelector;
 
@@ -40,9 +47,13 @@ public final class LiveMeasurementController {
     @FXML
     private Canvas previewCanvas;
 
+    @FXML
+    private Canvas trendCanvas;
+
     private LiveMeasurementViewModel viewModel;
     private ScreenNavigator navigator;
     private WritableImage previewImage;
+    private final Deque<Integer> heartRateHistory = new ArrayDeque<>();
 
     /// Creates the controller; instantiated by the JavaFX `FXMLLoader`.
     public LiveMeasurementController() {}
@@ -94,7 +105,26 @@ public final class LiveMeasurementController {
         renderPreview(null);
         viewModel.latestPreviewProperty().addListener((observable, previous, snapshot) -> renderPreview(snapshot));
 
+        renderTrend();
+        viewModel.currentHeartRateBpmProperty().addListener((observable, previous, bpm) -> onHeartRate(bpm));
+        viewModel.sessionActiveProperty().addListener((observable, was, active) -> {
+            if (Boolean.TRUE.equals(active)) {
+                heartRateHistory.clear();
+                renderTrend();
+            }
+        });
+
         viewModel.refreshDevices();
+    }
+
+    private void onHeartRate(Integer bpm) {
+        if (bpm != null) {
+            if (heartRateHistory.size() >= TREND_CAPACITY) {
+                heartRateHistory.removeFirst();
+            }
+            heartRateHistory.addLast(bpm);
+        }
+        renderTrend();
     }
 
     private void renderPreview(PreviewSnapshot snapshot) {
@@ -126,9 +156,56 @@ public final class LiveMeasurementController {
         if (roi == null) {
             return;
         }
+        double x = roi.x() * scaleX;
+        double y = roi.y() * scaleY;
+        double w = roi.width() * scaleX;
+        double h = roi.height() * scaleY;
         gc.setStroke(Color.LIMEGREEN);
         gc.setLineWidth(2.0);
-        gc.strokeRect(roi.x() * scaleX, roi.y() * scaleY, roi.width() * scaleX, roi.height() * scaleY);
+        gc.strokeRect(x, y, w, h);
+
+        // Detection probability label sitting on top of the box, OpenCV-style.
+        String label = String.format(Locale.ROOT, "face %.0f%%", roi.detectionConfidence() * 100.0);
+        gc.setFont(Font.font("System", FontWeight.BOLD, 15.0));
+        double labelY = y > 20.0 ? y - 6.0 : y + h + 16.0;
+        gc.setFill(Color.color(0.0, 0.0, 0.0, 0.55));
+        gc.fillRect(x, labelY - 14.0, 92.0, 18.0);
+        gc.setFill(Color.LIMEGREEN);
+        gc.fillText(label, x + 4.0, labelY);
+    }
+
+    private void renderTrend() {
+        GraphicsContext gc = trendCanvas.getGraphicsContext2D();
+        double width = trendCanvas.getWidth();
+        double height = trendCanvas.getHeight();
+        gc.setFill(Color.web("#101418"));
+        gc.fillRect(0.0, 0.0, width, height);
+        if (heartRateHistory.size() < 2) {
+            return;
+        }
+        gc.setStroke(Color.web("#26C6DA"));
+        gc.setLineWidth(2.0);
+        gc.beginPath();
+        int count = heartRateHistory.size();
+        double stepX = width / (TREND_CAPACITY - 1);
+        double startX = width - (count - 1) * stepX;
+        int index = 0;
+        for (int bpm : heartRateHistory) {
+            double px = startX + index * stepX;
+            double norm = (clampBpm(bpm) - TREND_MIN_BPM) / (TREND_MAX_BPM - TREND_MIN_BPM);
+            double py = height - norm * height;
+            if (index == 0) {
+                gc.moveTo(px, py);
+            } else {
+                gc.lineTo(px, py);
+            }
+            index++;
+        }
+        gc.stroke();
+    }
+
+    private static double clampBpm(int bpm) {
+        return Math.max(TREND_MIN_BPM, Math.min(TREND_MAX_BPM, bpm));
     }
 
     private void drawReadout(GraphicsContext gc) {

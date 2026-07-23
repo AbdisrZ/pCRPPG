@@ -24,6 +24,7 @@ import id.asr.rppgvitals.domain.estimation.ChromSignalEstimator;
 import id.asr.rppgvitals.domain.exception.ConfigurationException;
 import id.asr.rppgvitals.domain.session.MeasurementRepository;
 import id.asr.rppgvitals.infrastructure.capture.opencv.OpenCvFrameSource;
+import id.asr.rppgvitals.infrastructure.inference.onnx.YuNetFaceInferenceEngine;
 import id.asr.rppgvitals.infrastructure.persistence.sqlite.SqliteMeasurementRepository;
 import id.asr.rppgvitals.presentation.javafx.dashboard.LiveMeasurementViewModel;
 import id.asr.rppgvitals.presentation.javafx.dashboard.PlatformUiThreadExecutor;
@@ -52,7 +53,7 @@ final class CompositionRoot {
         MeasurementRepository repository = new SqliteMeasurementRepository(connection, APP_VERSION);
         OpenCvFrameSource frameSource = new OpenCvFrameSource();
         this.orchestrator = new LiveMeasurementOrchestrator(
-                frameSource, new HeuristicInferenceEngine(), new ChromSignalEstimator());
+                frameSource, new YuNetFaceInferenceEngine(), new ChromSignalEstimator());
         this.persistenceExecutor = Executors.newVirtualThreadPerTaskExecutor();
         Clock clock = Clock.systemUTC();
         SessionPersistenceCoordinator persistence = new SessionPersistenceCoordinator(

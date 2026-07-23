@@ -23,10 +23,13 @@
         <Button fx:id="startStopButton" onAction="#onStartStop"/>
     </HBox>
 
-    <Canvas fx:id="previewCanvas" width="360.0" height="270.0"/>
+    <Canvas fx:id="previewCanvas" width="560.0" height="420.0"/>
 
     <Label fx:id="heartRateLabel" style="-fx-font-size: 64px; -fx-font-weight: bold;"/>
     <Label fx:id="statusLabel" wrapText="true" style="-fx-font-size: 14px;"/>
+
+    <Label text="Heart-rate trend (bpm)" style="-fx-font-size: 11px; -fx-text-fill: #607D8B;"/>
+    <Canvas fx:id="trendCanvas" width="560.0" height="90.0"/>
 
     <Button fx:id="historyButton" text="View history" onAction="#onViewHistory"/>
 
