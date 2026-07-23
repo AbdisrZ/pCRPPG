@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import id.asr.rppgvitals.application.usecase.device.ListAvailableCameraDevicesUseCase;
 import id.asr.rppgvitals.application.usecase.measurement.EndMeasurementSessionUseCase;
 import id.asr.rppgvitals.application.usecase.measurement.LiveMeasurementOrchestrator;
+import id.asr.rppgvitals.application.usecase.measurement.SessionPersistenceCoordinator;
 import id.asr.rppgvitals.application.usecase.measurement.StartMeasurementSessionUseCase;
 import id.asr.rppgvitals.domain.capture.CaptureConfiguration;
 import id.asr.rppgvitals.domain.estimation.HeartRateEstimate;
@@ -34,9 +36,12 @@ class LiveMeasurementViewModelTest {
     private final EndMeasurementSessionUseCase endUseCase = mock(EndMeasurementSessionUseCase.class);
     private final ListAvailableCameraDevicesUseCase listUseCase = mock(ListAvailableCameraDevicesUseCase.class);
     private final LiveMeasurementOrchestrator orchestrator = mock(LiveMeasurementOrchestrator.class);
-    // A synchronous executor: callbacks apply immediately, so the ViewModel is testable without a toolkit.
+    // Same-thread executors for both persistence and UI marshaling: callbacks apply immediately, so the
+    // ViewModel is deterministically testable without a JavaFX toolkit or a live persistence thread.
+    private final SessionPersistenceCoordinator persistence =
+            new SessionPersistenceCoordinator(endUseCase, Runnable::run);
     private final LiveMeasurementViewModel viewModel =
-            new LiveMeasurementViewModel(startUseCase, endUseCase, listUseCase, orchestrator, Runnable::run);
+            new LiveMeasurementViewModel(startUseCase, persistence, listUseCase, orchestrator, Runnable::run);
 
     @Test
     void onHeartRateUpdated_showsTheReadingAndItsTier() {
@@ -140,5 +145,28 @@ class LiveMeasurementViewModelTest {
         verify(endUseCase).execute(session);
         assertFalse(viewModel.sessionActiveProperty().get());
         assertEquals("Session saved", viewModel.signalStatusMessageProperty().get());
+    }
+
+    @Test
+    void shutdown_withActiveSession_stopsThePipelineAndFlushesSynchronously() {
+        MeasurementSession session = new MeasurementSession(UUID.randomUUID(), "cam-0", NOW);
+        when(startUseCase.execute("cam-0")).thenReturn(session);
+        viewModel.selectedDeviceProperty().set("cam-0");
+        viewModel.startSession();
+
+        viewModel.shutdown();
+
+        verify(orchestrator).stop();
+        verify(endUseCase).execute(session);
+        assertFalse(viewModel.sessionActiveProperty().get());
+    }
+
+    @Test
+    void shutdown_whenIdle_isANoOp() {
+        viewModel.shutdown();
+
+        verify(orchestrator, never()).stop();
+        verify(endUseCase, never()).execute(any());
+        assertFalse(viewModel.sessionActiveProperty().get());
     }
 }

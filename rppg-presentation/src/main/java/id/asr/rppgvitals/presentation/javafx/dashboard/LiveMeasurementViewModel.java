@@ -12,9 +12,9 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 import id.asr.rppgvitals.application.usecase.device.ListAvailableCameraDevicesUseCase;
-import id.asr.rppgvitals.application.usecase.measurement.EndMeasurementSessionUseCase;
 import id.asr.rppgvitals.application.usecase.measurement.LiveMeasurementOrchestrator;
 import id.asr.rppgvitals.application.usecase.measurement.MeasurementObserver;
+import id.asr.rppgvitals.application.usecase.measurement.SessionPersistenceCoordinator;
 import id.asr.rppgvitals.application.usecase.measurement.StartMeasurementSessionUseCase;
 import id.asr.rppgvitals.domain.capture.CaptureConfiguration;
 import id.asr.rppgvitals.domain.estimation.HeartRateEstimate;
@@ -40,12 +40,14 @@ public final class LiveMeasurementViewModel implements MeasurementObserver {
 
     private static final String IDLE_MESSAGE = "Select a camera and press Start";
     private static final String SEARCHING_MESSAGE = "Finding your pulse — hold still and face the camera";
+    private static final String SAVING_MESSAGE = "Saving session…";
     private static final String SAVED_MESSAGE = "Session saved";
+    private static final String SAVE_FAILED_MESSAGE = "Couldn't save the session — please try again";
     private static final String CAMERA_LOST_MESSAGE = "Camera disconnected — reconnect to continue";
     private static final String LOW_LIGHT_MESSAGE = "Lighting too low — move to a brighter area";
 
     private final StartMeasurementSessionUseCase startSessionUseCase;
-    private final EndMeasurementSessionUseCase endSessionUseCase;
+    private final SessionPersistenceCoordinator persistenceCoordinator;
     private final ListAvailableCameraDevicesUseCase listDevicesUseCase;
     private final LiveMeasurementOrchestrator orchestrator;
     private final UiThreadExecutor uiThreadExecutor;
@@ -62,18 +64,18 @@ public final class LiveMeasurementViewModel implements MeasurementObserver {
     /// Creates the ViewModel with its application-layer collaborators.
     ///
     /// @param startSessionUseCase creates a new session; never `null`
-    /// @param endSessionUseCase finalises and persists a session; never `null`
+    /// @param persistenceCoordinator finalises and persists a session off the FX thread; never `null`
     /// @param listDevicesUseCase enumerates camera devices; never `null`
     /// @param orchestrator the live capture/estimation pipeline; never `null`
     /// @param uiThreadExecutor marshals callbacks onto the JavaFX Application Thread; never `null`
     public LiveMeasurementViewModel(
             StartMeasurementSessionUseCase startSessionUseCase,
-            EndMeasurementSessionUseCase endSessionUseCase,
+            SessionPersistenceCoordinator persistenceCoordinator,
             ListAvailableCameraDevicesUseCase listDevicesUseCase,
             LiveMeasurementOrchestrator orchestrator,
             UiThreadExecutor uiThreadExecutor) {
         this.startSessionUseCase = Objects.requireNonNull(startSessionUseCase, "startSessionUseCase");
-        this.endSessionUseCase = Objects.requireNonNull(endSessionUseCase, "endSessionUseCase");
+        this.persistenceCoordinator = Objects.requireNonNull(persistenceCoordinator, "persistenceCoordinator");
         this.listDevicesUseCase = Objects.requireNonNull(listDevicesUseCase, "listDevicesUseCase");
         this.orchestrator = Objects.requireNonNull(orchestrator, "orchestrator");
         this.uiThreadExecutor = Objects.requireNonNull(uiThreadExecutor, "uiThreadExecutor");
@@ -106,15 +108,33 @@ public final class LiveMeasurementViewModel implements MeasurementObserver {
         signalStatusMessage.set(SEARCHING_MESSAGE);
     }
 
-    /// Ends the active session: stops the pipeline and persists it (`02` FR-107).
+    /// Ends the active session: stops the pipeline (draining synchronously), then persists it off the FX
+    /// thread and reports the outcome back on the FX thread (`02` FR-107, `11_THREADING.md §7`, `§9`).
     public void endSession() {
         orchestrator.stop();
-        endSessionUseCase.execute(currentSession);
+        MeasurementSession ending = currentSession;
         currentSession = null;
         sessionActive.set(false);
         currentHeartRateBpm.set(null);
         confidenceTier.set(null);
-        signalStatusMessage.set(SAVED_MESSAGE);
+        signalStatusMessage.set(SAVING_MESSAGE);
+        persistenceCoordinator.endAsync(
+                ending,
+                () -> uiThreadExecutor.runOnUiThread(() -> signalStatusMessage.set(SAVED_MESSAGE)),
+                failure -> uiThreadExecutor.runOnUiThread(() -> signalStatusMessage.set(SAVE_FAILED_MESSAGE)));
+    }
+
+    /// Flushes an in-progress session synchronously on application exit, so a measurement is never lost
+    /// (`11_THREADING.md §8`). No-op when idle.
+    public void shutdown() {
+        if (!sessionActive.get()) {
+            return;
+        }
+        orchestrator.stop();
+        MeasurementSession ending = currentSession;
+        currentSession = null;
+        sessionActive.set(false);
+        persistenceCoordinator.endNow(ending);
     }
 
     /// {@inheritDoc}
