@@ -3,6 +3,7 @@ package id.asr.rppgvitals.infrastructure.capture.opencv;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 import nu.pattern.OpenCV;
@@ -29,6 +30,16 @@ public final class OpenCvFrameSource implements FrameSource {
 
     private static final int MAX_PROBED_DEVICES = 5;
 
+    /// The capture backend to request. On Windows the default `CAP_ANY` probes every backend including
+    /// OBSENSOR (Orbbec depth cameras), which floods the log with "Camera index out of range" for absent
+    /// devices and falls back to the less reliable Media Foundation path; DirectShow is quieter and more
+    /// dependable for consumer webcams. Elsewhere `CAP_ANY` lets OpenCV pick the platform's native
+    /// backend (V4L2 on Linux, AVFoundation on macOS).
+    private static final int CAPTURE_BACKEND =
+            System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("win")
+                    ? Videoio.CAP_DSHOW
+                    : Videoio.CAP_ANY;
+
     static {
         OpenCV.loadLocally();
     }
@@ -45,7 +56,7 @@ public final class OpenCvFrameSource implements FrameSource {
     public List<String> availableDeviceIds() {
         List<String> ids = new ArrayList<>();
         for (int index = 0; index < MAX_PROBED_DEVICES; index++) {
-            VideoCapture probe = new VideoCapture(index);
+            VideoCapture probe = new VideoCapture(index, CAPTURE_BACKEND);
             if (probe.isOpened()) {
                 ids.add(Integer.toString(index));
             }
@@ -59,15 +70,15 @@ public final class OpenCvFrameSource implements FrameSource {
     public void open(CaptureConfiguration configuration) {
         Objects.requireNonNull(configuration, "configuration");
         int index = parseIndex(configuration.deviceId());
-        VideoCapture opened = new VideoCapture(index);
-        opened.set(Videoio.CAP_PROP_FRAME_WIDTH, configuration.frameWidth());
-        opened.set(Videoio.CAP_PROP_FRAME_HEIGHT, configuration.frameHeight());
-        opened.set(Videoio.CAP_PROP_FPS, configuration.targetFrameRate());
+        VideoCapture opened = openDevice(index);
         if (!opened.isOpened()) {
             opened.release();
             throw new CameraUnavailableException(
                     configuration.deviceId(), "cannot open camera " + configuration.deviceId());
         }
+        opened.set(Videoio.CAP_PROP_FRAME_WIDTH, configuration.frameWidth());
+        opened.set(Videoio.CAP_PROP_FRAME_HEIGHT, configuration.frameHeight());
+        opened.set(Videoio.CAP_PROP_FPS, configuration.targetFrameRate());
         this.capture = opened;
         this.deviceId = configuration.deviceId();
         this.sequenceIndex = 0;
@@ -101,6 +112,16 @@ public final class OpenCvFrameSource implements FrameSource {
             capture.release();
             capture = null;
         }
+    }
+
+    private static VideoCapture openDevice(int index) {
+        VideoCapture preferred = new VideoCapture(index, CAPTURE_BACKEND);
+        if (preferred.isOpened() || CAPTURE_BACKEND == Videoio.CAP_ANY) {
+            return preferred;
+        }
+        // The preferred backend could not open the device; fall back to OpenCV's automatic selection.
+        preferred.release();
+        return new VideoCapture(index, Videoio.CAP_ANY);
     }
 
     private VideoCapture requireOpen() {
