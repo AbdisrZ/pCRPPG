@@ -59,6 +59,8 @@ class LiveMeasurementIntegrationTest {
     /// A frame source whose uniform pixels carry a sinusoidal pulse per channel (green strongest), so
     /// the downstream spatial mean is a clean synthetic rPPG signal at {@link #PULSE_HZ}.
     private static final class SyntheticFrameSource implements FrameSource {
+        private static final Instant SIGNAL_EPOCH = Instant.parse("2026-07-24T00:00:00Z");
+
         private final int width;
         private final int height;
         private final double pulseHz;
@@ -95,9 +97,12 @@ class LiveMeasurementIntegrationTest {
                 pixels[i * Frame.CHANNELS + 1] = green;
                 pixels[i * Frame.CHANNELS + 2] = blue;
             }
-            // Model a real camera's cadence and yield this virtual thread.
+            // Timestamp at the nominal cadence so the measured sampling rate matches how the pulse is
+            // generated (index / frameRate); a real camera timestamps at true capture time instead.
+            Instant capturedAt = SIGNAL_EPOCH.plusNanos(Math.round(index * 1_000_000_000.0 / frameRate));
+            // Yield this virtual thread without pinning the wall clock to the logical cadence.
             LockSupport.parkNanos(50_000L);
-            return new Frame(pixels, width, height, index, Instant.now());
+            return new Frame(pixels, width, height, index, capturedAt);
         }
 
         @Override

@@ -1,5 +1,7 @@
 package id.asr.rppgvitals.application.usecase.measurement;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -108,7 +110,8 @@ final class MeasurementPipeline {
             return;
         }
         try {
-            HeartRateEstimate estimate = estimator.estimate(new PpgWaveform(new ArrayList<>(window), samplingRateHz));
+            HeartRateEstimate estimate =
+                    estimator.estimate(new PpgWaveform(new ArrayList<>(window), effectiveSamplingRate()));
             session.recordEstimate(estimate);
             observer.onHeartRateUpdated(estimate);
             transitionQuality(stateMachine.afterEstimate(currentQuality, estimate.confidence(), true));
@@ -116,6 +119,20 @@ final class MeasurementPipeline {
             // A numerically degenerate window is not a session failure (08 §5); skip this estimate.
             transitionQuality(stateMachine.afterEstimate(currentQuality, 0.0, false));
         }
+    }
+
+    /// The sampling rate to hand the estimator, measured from the actual frame timestamps in the window
+    /// rather than assuming the configured target — a real webcam rarely delivers its nominal frame rate,
+    /// and the frequency-to-bpm mapping (`08 §2`) is only correct at the true rate. Falls back to the
+    /// configured rate when the window's timestamps do not span a positive interval.
+    private double effectiveSamplingRate() {
+        Instant first = window.peekFirst().timestamp();
+        Instant last = window.peekLast().timestamp();
+        double seconds = Duration.between(first, last).toNanos() / 1_000_000_000.0;
+        if (seconds > 0.0) {
+            return (window.size() - 1) / seconds;
+        }
+        return samplingRateHz;
     }
 
     private void transitionQuality(SignalQuality next) {

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
@@ -15,6 +16,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import id.asr.rppgvitals.domain.capture.Frame;
 import id.asr.rppgvitals.domain.detection.InferenceEngine;
@@ -23,6 +25,7 @@ import id.asr.rppgvitals.domain.estimation.HeartRateEstimate;
 import id.asr.rppgvitals.domain.estimation.SignalEstimator;
 import id.asr.rppgvitals.domain.exception.SignalQualityException;
 import id.asr.rppgvitals.domain.session.MeasurementSession;
+import id.asr.rppgvitals.domain.signal.PpgWaveform;
 import id.asr.rppgvitals.domain.signal.SignalQuality;
 
 class MeasurementPipelineTest {
@@ -43,6 +46,10 @@ class MeasurementPipelineTest {
         return new Frame(new byte[2 * 2 * Frame.CHANNELS], 2, 2, 0L, NOW);
     }
 
+    private static Frame frameAt(Instant capturedAt) {
+        return new Frame(new byte[2 * 2 * Frame.CHANNELS], 2, 2, 0L, capturedAt);
+    }
+
     private void feed(int frames) {
         MeasurementPipeline pipeline = pipeline();
         for (int i = 0; i < frames; i++) {
@@ -61,6 +68,22 @@ class MeasurementPipelineTest {
         assertEquals(72.0, observer.estimates.get(0).beatsPerMinute());
         assertEquals(1, session.estimates().size());
         assertInstanceOf(SignalQuality.Stable.class, observer.qualityChanges.get(observer.qualityChanges.size() - 1));
+    }
+
+    @Test
+    void onFrame_estimatesAtTheMeasuredFrameRate_notTheConfiguredOne() {
+        when(inferenceEngine.detectRegionOfInterest(any())).thenReturn(Optional.of(ROI));
+        when(estimator.estimate(any())).thenReturn(new HeartRateEstimate(72.0, 0.9, NOW, "CHROM"));
+        ArgumentCaptor<PpgWaveform> waveform = ArgumentCaptor.forClass(PpgWaveform.class);
+
+        MeasurementPipeline pipeline = pipeline();
+        pipeline.onFrame(frameAt(NOW));
+        pipeline.onFrame(frameAt(NOW.plusMillis(50)));
+        pipeline.onFrame(frameAt(NOW.plusMillis(100)));
+
+        verify(estimator).estimate(waveform.capture());
+        // Three samples spanning 100 ms → 2 intervals / 0.1 s = 20 Hz, not the configured 30.
+        assertEquals(20.0, waveform.getValue().samplingRateHz(), 1.0e-9);
     }
 
     @Test
